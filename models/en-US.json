@@ -44,6 +44,7 @@
                         }
                     ],
                     "samples": [
+                        "you got it",
                         "I'm thinking of a number between {numberStart} and {numberEnd}",
                         "colder",
                         "warmer",
