@@ -34,3 +34,6 @@ RUN npm install -g ask-cli && \
 # /home/node/.ask: This is the location of the ask config folder
 # /home/node/app: Your development folder
 VOLUME ["/home/node/.ask", "/home/node/.aws", "/home/node/app"]
+ADD skill.json /home/node/app
+ADD models /home/node/app
+ADD lambda /home/node/app
