@@ -8,19 +8,19 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/alexa/skill-sample-nodejs-highlowgame.git"
+    "url": "git+https://github.com/n2lovell/skill-sample-nodejs-highlowgame.git"
   },
   "keywords": [
     "Alexa",
     "game",
     "skill"
   ],
-  "author": "Amazon.com",
+  "author": "Mostly Amazon",
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/alexa/skill-sample-nodejs-highlowgame/issues"
+    "url": "https://github.com/n2lovell/skill-sample-nodejs-highlowgame/issues"
   },
-  "homepage": "https://github.com/alexa/skill-sample-nodejs-highlowgame#readme",
+  "homepage": "https://github.com/n2lovell/skill-sample-nodejs-highlowgame#readme",
   "dependencies": {
     "ask-sdk": "^2.0.0"
   }
