@@ -44,13 +44,21 @@
                         }
                     ],
                     "samples": [
-                        "you got it",
-                        "I'm thinking of a number between {numberStart} and {numberEnd}",
-                        "colder",
-                        "warmer",
-                        "warm",
-                        "cold",
-                        "hot"
+                        "I'm thinking of a number between {numberStart} and {numberEnd}"
+                    ]
+                },
+                {
+                    "name": "AlexaGuess",
+                    "slots": [
+                        {
+                            "name": "Response",
+                            "type": "AMAZON.LITERAL"
+                        }
+                    ],
+                    "samples": [
+                        "{correct|Response}",
+                        "{lower|Response}",
+                        "{higher|Response}"
                     ]
                 }
             ],

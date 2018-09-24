@@ -70,9 +70,9 @@ const HelpIntent = {
     return request.type === 'IntentRequest' && request.intent.name === 'AMAZON.HelpIntent';
   },
   handle(handlerInput) {
-    const speechOutput = 'I am thinking of a number between zero and one hundred, try to guess it and I will tell you' +
+    const speechOutput = 'You are thinking of a number between zero and one hundred, and I will try to guess it by asking' +
             ' if it is higher or lower.';
-    const reprompt = 'Try saying a number.';
+    const reprompt = 'Say higher, lower or correct';
 
     return handlerInput.responseBuilder
       .speak(speechOutput)
@@ -102,6 +102,8 @@ const YesIntent = {
     const sessionAttributes = attributesManager.getSessionAttributes();
 
     sessionAttributes.gameState = 'STARTED';
+	sessionAttributes.maxNumber;
+	sessionAttributes.minNumber 
     sessionAttributes.guessNumber = Math.floor(Math.random() * 101);
 
     return responseBuilder
@@ -154,10 +156,13 @@ const UnhandledIntent = {
   },
 };
 
+
 const NumberGuessIntent = {
   canHandle(handlerInput) {
     // handle numbers only during a game
     let isCurrentlyPlaying = false;
+	let isCurrentlyStarted = false;
+
     const request = handlerInput.requestEnvelope.request;
     const attributesManager = handlerInput.attributesManager;
     const sessionAttributes = attributesManager.getSessionAttributes();
@@ -166,40 +171,99 @@ const NumberGuessIntent = {
         sessionAttributes.gameState === 'STARTED') {
       isCurrentlyPlaying = true;
     }
-
-    return isCurrentlyPlaying && request.type === 'IntentRequest' && request.intent.name === 'NumberGuessIntent';
+	if (sessionAttributes.minNumber)
+	{
+	  isCurrentlyStarted = true;
+	}
+    return !isCurrentlyStarted && isCurrentlyPlaying && request.type === 'IntentRequest' && request.intent.name === 'NumberGuessIntent';
   },
   async handle(handlerInput) {
     const { requestEnvelope, attributesManager, responseBuilder } = handlerInput;
 
-    const guessNum = parseInt(requestEnvelope.request.intent.slots.number.value, 10);
+    const minNumber = parseInt(requestEnvelope.request.intent.slots.numberStart.value, 1);
+	const maxNumber = parseInt(requestEnvelope.request.intent.slots.numberEnd.value, 1000);
     const sessionAttributes = attributesManager.getSessionAttributes();
-    const targetNum = sessionAttributes.guessNumber;
-
-    if (guessNum > targetNum) {
+    sessionAttributes.minNumber = minNumber;
+	sessionAttributes.maxNumber = maxNumber;
+    if (maxNumber > minNumber) {
+	  sessionAttributes.alexaGuess = Math.floor(Math.random() * (maxNumber - minNumber)) + minNumber;
       return responseBuilder
-        .speak(`${guessNum.toString()} is too high.`)
-        .reprompt('Try saying a smaller number.')
+        .speak(I guess ${sessionAttributes.alexaGuess.toString()}`)
+        .reprompt('Is it higher, lower, or just right')
         .getResponse();
-    } else if (guessNum < targetNum) {
-      return responseBuilder
-        .speak(`${guessNum.toString()} is too low.`)
-        .reprompt('Try saying a larger number.')
-        .getResponse();
-    } else if (guessNum === targetNum) {
-      sessionAttributes.gamesPlayed += 1;
-      sessionAttributes.gameState = 'ENDED';
-      attributesManager.setPersistentAttributes(sessionAttributes);
-      await attributesManager.savePersistentAttributes();
-      return responseBuilder
-        .speak(`${guessNum.toString()} is correct! Would you like to play a new game?`)
-        .reprompt('Say yes to start a new game, or no to end the game.')
-        .getResponse();
-    }
+    } 
     return handlerInput.responseBuilder
-      .speak('Sorry, I didn\'t get that. Try saying a number.')
-      .reprompt('Try saying a number.')
+      .speak('Sorry, I didn\'t get that. Try saying two numbers between 1 and a thousand.')
+      .reprompt('Try saying I\'m thinking of a number between 1 and 1000')
       .getResponse();
+  },
+};
+
+
+
+const AlexaGuess = {
+  canHandle(handlerInput) {
+    // handle higher/lower during the game
+    let isCurrentlyPlaying = false;
+
+    const request = handlerInput.requestEnvelope.request;
+    const attributesManager = handlerInput.attributesManager;
+    const sessionAttributes = attributesManager.getSessionAttributes();
+
+    if (sessionAttributes.minNumber &&
+        sessionAttributes.gameState === 'STARTED') {
+      isCurrentlyPlaying = true;
+    }
+	
+    return isCurrentlyPlaying && request.type === 'IntentRequest' && request.intent.name === 'AlexaGuess';
+  },
+  async handle(handlerInput) {
+    const { requestEnvelope, attributesManager, responseBuilder } = handlerInput;
+
+    const utterance = requestEnvelope.request.intent.slots.Response.value;
+    const sessionAttributes = attributesManager.getSessionAttributes();
+	minNumber = sessionAttributes.minNumber;
+	maxNumber = sessionAttributes.maxNumber;
+	const lastGuess = sessionAttributes.alexaGuess;
+	
+	  //update the min/max values
+	  //Note we call out users for cheating when it collapses to nothing
+	if (utterance === 'higher') {
+	  minNumber = lastGuess;
+    } else if (utterance === 'lower') {
+		maxNumber = lastGuess;
+	} else if (utterance == 'correct') {
+		sessionAttributes.endedSessionCount += 1;
+		sessionAttributes.gameState = 'ENDED';
+		attributesManager.setPersistentAttributes(sessionAttributes);
+		await attributesManager.savePersistentAttributes();
+
+		return responseBuilder.speak('Ok, see you next time!').getResponse();
+	} else {
+	  return handlerInput.responseBuilder
+      .speak('Sorry, I didn\'t get that. Try saying two numbers between 1 and a thousand.')
+      .reprompt('Try saying I\'m thinking of a number between 1 and 1000')
+      .getResponse();
+	}
+	
+	if (minNumber >= maxNumber) {
+		sessionAttributes.endedSessionCount += 1;
+		sessionAttributes.gameState = 'ENDED';
+		attributesManager.setPersistentAttributes(sessionAttributes);
+		await attributesManager.savePersistentAttributes();
+
+		return responseBuilder.speak('CHEATER, see you next time').getResponse();
+	}
+	
+	//make new guess
+	sessionAttributes.minNumber = minNumber;
+	sessionAttributes.maxNumber = maxNumber;
+	sessionAttributes.alexaGuess = Math.floor(Math.random() * (maxNumber - minNumber)) + minNumber;
+	
+	return responseBuilder
+		.speak(I guess ${sessionAttributes.alexaGuess.toString()}`)
+		.reprompt('Is it higher, lower, or correct')
+		.getResponse();
   },
 };
 
